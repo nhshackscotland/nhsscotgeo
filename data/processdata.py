@@ -7,6 +7,8 @@ import string
 
 files = [
     'data/all_hospitals.csv',
+    'data/AAE.csv',
+    'data/MIU.csv',
     'data/all_gps.csv',
     'data/all_pharmacies.csv',
     'data/all_dentists.csv',
@@ -29,10 +31,11 @@ def get_headers(filename):
 def map_field_name(fieldname):
     """
     At least one field has a different name across datasets
+    Also lowercase and replace spaces
     """
-    fn = fieldname.lower()
-    if fn == 'dataset code code':
-        return 'dataset code'
+    fn = fieldname.lower().replace(' ', '_')
+    if fn == 'dataset_code_code':
+        return 'dataset_code'
     return fn
 
 
@@ -109,12 +112,12 @@ def append_lat_long(data, pcmap):
     n = 0
     for d in data:
         n += 1
-        pc = normalise_postcode(d['post code'])
+        pc = normalise_postcode(d['post_code'])
 
         try:
             latitude, longitude = pcmap[pc]
         except KeyError:
-            err = (n, d['post code'], pc)
+            err = (n, d['post_code'], pc)
             print 'Lookup failed: row:%d input:%s normalised:%s' % err
             failures.append(err)
             latitude, longitude = None, None
@@ -135,6 +138,7 @@ def write_data_csv(filename, datadict):
         w.writerows(datadict)
 
 pcmap = postcode_lat_long_map()
+all_fields = get_combined_fields(files)
 data = read_all_datasets(files)
 datall, failures = append_lat_long(data, pcmap)
 write_data_csv(outputfile, datall)
