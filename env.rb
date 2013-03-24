@@ -1,9 +1,14 @@
 require 'pry'
 require 'sinatra'
-require 'dotenv'
+
 require 'mongoid'
 
-Dotenv.load
+
+if ENV['RACK_ENV'] == 'development'
+
+  require 'dotenv'
+  Dotenv.load
+end
 
 Mongoid.logger.level = Logger::DEBUG
 Moped.logger.level = Logger::DEBUG
