@@ -1,0 +1,16 @@
+test:
+  sessions:
+    default:
+      database: mongoid_test
+      hosts:
+        - localhost:27017
+
+development:
+  sessions:
+    default:
+      database: mongoid
+      hosts:
+        - localhost:27017
+
+production:
+  uri: <%= ENV['MONGOLAB_URI'] %>
