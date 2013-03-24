@@ -128,6 +128,67 @@ def append_lat_long(data, pcmap):
     return data, failures
 
 
+################################################################################
+# Post processing
+################################################################################
+def get_cleaned_fields(data):
+    namefields = ['name_of_hospital',
+                  'name_of_aae',
+                  'name_of_miu',
+                  'practice_name',
+                  'name_of_pharmacy',
+                  'name_of_clinic'
+                  ]
+    phonefields = ['reception/switchboard_phone_number',
+                   'reception_phone_number',
+                   'pharmacy_public_phone_number',
+                   'clinic_public_phone_number',
+                   'alt_phone_number_1',
+                   'alt_phone_number_2'
+                   ]
+    addressfields = ['address_line_1',
+                     'address_line_2',
+                     'address_line_3',
+                     'address_line_4',
+                     'post_town',
+                     'post_code'
+                     ]
+
+    failures = []
+    n = 0
+    for d in data:
+        n += 1
+
+        name = None
+        for f in namefields:
+            if d[f]:
+                name = d[f]
+                break
+
+        phone = None
+        for f in phonefields:
+            if d[f]:
+                phone = d[f]
+                break
+
+        address = ''
+        for f in addressfields:
+            if d[f]:
+                s = d[f].strip()
+                if s:
+                    address += s + '\n'
+
+        d['location_name'] = name
+        d['phone'] = phone
+        d['address'] = address
+
+    return data
+
+
+################################################################################
+# Final output
+################################################################################
+
 def write_data_csv(filename, datadict):
     fields = datadict[0].keys()
     # The header line also needs to be a dict
@@ -137,10 +198,14 @@ def write_data_csv(filename, datadict):
         w.writerow(header)
         w.writerows(datadict)
 
+
 pcmap = postcode_lat_long_map()
 all_fields = get_combined_fields(files)
 data = read_all_datasets(files)
 datall, failures = append_lat_long(data, pcmap)
+datall = get_cleaned_fields(datall)
 write_data_csv(outputfile, datall)
 
 
+#with open('processed.pkl','w') as f:
+#    pickle.dump({'all_fields':all_fields, 'data':data, 'datall':datall, 'pcmap':pcmap, 'failures':failures}, f)
