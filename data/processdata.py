@@ -202,6 +202,8 @@ def get_cleaned_fields(data):
     for d in data:
         n += 1
 
+        typecode = re.search('-(.+)', d['dataset_code']).group(1)
+
         name = None
         for f in namefields:
             if d[f]:
@@ -221,6 +223,7 @@ def get_cleaned_fields(data):
                 if s:
                     address += s + '\n'
 
+        d['type_code'] = typecode
         d['location_name'] = name
         d['phone'] = phone
         d['address'] = address
