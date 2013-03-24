@@ -13,4 +13,9 @@ development:
         - localhost:27017
 
 production:
+  sessions:
+      default:
+        database: overridden
+        hosts:
+          - localhost:27017
   uri: <%= ENV['MONGOLAB_URI'] %>
