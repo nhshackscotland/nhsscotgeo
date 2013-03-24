@@ -3,7 +3,7 @@ import pickle
 import csv
 import collections
 import string
-
+import re
 
 files = [
     'data/all_hospitals.csv',
@@ -131,6 +131,49 @@ def append_lat_long(data, pcmap):
 ################################################################################
 # Post processing
 ################################################################################
+def opening_times(d):
+    def not_empty(s):
+        return s and len(s.strip()) > 0
+
+    def get_time(s):
+        try:
+            return re.search('(\d\d\:\d\d):\d\d', s).group(1)
+        except:
+            return None
+
+    days = [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday']
+    periods = [1, 2, 3]
+
+    openstrs = []
+    for day in days:
+        daytimes = []
+        for per in periods:
+            op = get_time(d['%s_open_%d' % (day, per)])
+            cl = get_time(d['%s_close_%d' % (day, per)])
+            if op and cl:
+                daytimes.append('%s-%s' %(op, cl))
+        if daytimes:
+            openstrs.append(day[0].capitalize() + day[1:] + ' ' + ' '.join(daytimes))
+
+    rota = d['rota_opening_hours']
+    if not_empty(rota):
+        openstrs.append(rota)
+
+    hol = d['public_holiday_opening_hours']
+    if not_empty(hol):
+        openstrs.append(hol)
+
+    openstr = '\n'.join(openstrs)
+    return openstr
+
+
 def get_cleaned_fields(data):
     namefields = ['name_of_hospital',
                   'name_of_aae',
@@ -181,6 +224,7 @@ def get_cleaned_fields(data):
         d['location_name'] = name
         d['phone'] = phone
         d['address'] = address
+        d['opening_times'] = opening_times(d)
 
     return data
 
