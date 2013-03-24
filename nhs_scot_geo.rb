@@ -18,7 +18,7 @@ get "/services/search.json" do
     latlngs.map! { |l| l.to_f }
 
     # and finally run our query
-    searched_services = Service.geo_near(latlngs).spherical.unique(true).max_distance(2)
+    searched_services = Service.geo_near(latlngs).spherical.unique(true)
 
     searched_services.to_json
   end
