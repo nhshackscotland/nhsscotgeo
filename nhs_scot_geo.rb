@@ -2,6 +2,8 @@ require_relative 'env'
 require_relative 'models/service'
 require 'json'
 
+RADIUS_OF_EARTH_IN_MILES = 3959
+
 get "/services/search.json" do
   if params['ll'].nil?
     content_type :json
@@ -18,7 +20,10 @@ get "/services/search.json" do
     latlngs.map! { |l| l.to_f }
 
     # and finally run our query
-    searched_services = Service.geo_near(latlngs).spherical.unique(true)
+    searched_services = Service.
+      geo_near(latlngs).
+      spherical.unique(true).
+      distance_multiplier(RADIUS_OF_EARTH_IN_MILES)
 
     searched_services.to_json
   end
