@@ -14,11 +14,12 @@ get "/services/search.json" do
     # naively assuming our lat-longs will only ever look like 57,44
     latlngs = params['ll'].split(',')
 
-    # we need to make sure we pass integers into our query or Mongoid complains
-    latlngs.map! { |l| l.to_i }
+    # we need to make sure we pass numbers into our query or Mongoid complains
+    latlngs.map! { |l| l.to_f }
 
     # and finally run our query
-    searched_services = Service.geo_near(latlngs).spherical
+    searched_services = Service.geo_near(latlngs).spherical.unique(true).max_distance(2)
+
     searched_services.to_json
   end
 end
