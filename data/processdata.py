@@ -237,6 +237,7 @@ def get_cleaned_fields(data, typecodes):
                         address = s
 
 
+        d['demo_id'] = n + 1
         d['type_code'] = typecode
         d['location_name'] = name
         d['phone'] = phone
