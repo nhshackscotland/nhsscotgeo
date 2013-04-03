@@ -5,17 +5,17 @@ import collections
 import string
 import re
 
-files = [
-    'data/all_hospitals.csv',
-    'data/AAE.csv',
-    'data/MIU.csv',
-    'data/all_gps.csv',
-    'data/all_pharmacies.csv',
-    'data/all_dentists.csv',
-    'data/all_opticians.csv',
-    'data/sexual_health.csv',
-    'data/travel_clinics.csv',
-    ]
+files = collections.OrderedDict([
+        ('exported/All_Hospitals.csv', 'HOS'),
+        ('MIU_AAE/AAE.csv', 'AAE'),
+        ('MIU_AAE/MIU.csv', 'MIU'),
+        ('exported/All_GPs.csv', 'GP'),
+        ('exported/All_pharmacies.csv', 'PHA'),
+        ('exported/All_dentists.csv', 'DEN'),
+        ('exported/All_opticians.csv', 'OPT'),
+        ('exported/Sexual Health.csv', 'SEX'),
+        ('exported/Travel Clinics.csv', 'TC'),
+        ])
 pcfile = 'data/postcodes.csv'
 
 outputfile = 'all_data.csv'
@@ -72,19 +72,21 @@ def read_dataset(filename, all_fields):
 
     return data
 
-def read_all_datasets(filenames):
+def read_all_datasets(files_types):
     data = []
-    all_fields = get_combined_fields(filenames)
-    for f in filenames:
+    typecodes = []
+    all_fields = get_combined_fields(files_types.keys())
+    for (f, t) in files_types.iteritems():
         d = read_dataset(f, all_fields)
         data.extend(d)
-        print f, len(d)
+        typecodes.extend([t] * len(d))
+        print f, t, len(d)
 
     # Sanity check
     for d in data:
         assert(data[0].keys() == d.keys())
 
-    return data
+    return data, typecodes
 
 
 
@@ -173,8 +175,16 @@ def opening_times(d):
     openstr = '\n'.join(openstrs)
     return openstr
 
+def qualifying_comment(typecode):
+    if typecode == 'GP':
+        return 'Use SBAR tool when conducting a clinical conversation. Expect a call back within 10 minutes. Patient must be stable.'
+    if typecode == 'MIU':
+        return 'Patient must be stable.'
+    if typecode == 'AAE':
+        return 'Pre-alert for sepsis.'
+    return ''
 
-def get_cleaned_fields(data):
+def get_cleaned_fields(data, typecodes):
     namefields = ['name_of_hospital',
                   'name_of_aae',
                   'name_of_miu',
@@ -198,11 +208,11 @@ def get_cleaned_fields(data):
                      ]
 
     failures = []
-    n = 0
-    for d in data:
-        n += 1
 
-        typecode = re.search('-(.+)', d['dataset_code']).group(1)
+    for n in xrange(len(data)):
+        d = data[n]
+
+        typecode = typecodes[n]
 
         name = None
         for f in namefields:
@@ -216,19 +226,30 @@ def get_cleaned_fields(data):
                 phone = d[f]
                 break
 
-        address = ''
+        address = None
         for f in addressfields:
             if d[f]:
                 s = d[f].strip()
                 if s:
-                    address += s + '\n'
+                    if address:
+                        address += '\n' + s
+                    else:
+                        address = s
+
 
         d['type_code'] = typecode
         d['location_name'] = name
         d['phone'] = phone
         d['address'] = address
         d['opening_times'] = opening_times(d)
+        d['qualifying_comment'] = qualifying_comment(typecode)
 
+    return data
+
+def delete_missing_location(data):
+    for i in xrange(len(data) - 1, -1, -1):
+        if not data[i]['latitude'] or  not data[i]['longitude']:
+            del data[i]
     return data
 
 
@@ -248,11 +269,12 @@ def write_data_csv(filename, datadict):
 
 pcmap = postcode_lat_long_map()
 all_fields = get_combined_fields(files)
-data = read_all_datasets(files)
-datall, failures = append_lat_long(data, pcmap)
-datall = get_cleaned_fields(datall)
-write_data_csv(outputfile, datall)
+data, typecodes = read_all_datasets(files)
+data, failures = append_lat_long(data, pcmap)
+data = get_cleaned_fields(data, typecodes)
+#data = delete_missing_location(data)
+write_data_csv(outputfile, data)
 
 
 #with open('processed.pkl','w') as f:
-#    pickle.dump({'all_fields':all_fields, 'data':data, 'datall':datall, 'pcmap':pcmap, 'failures':failures}, f)
+#    pickle.dump({'all_fields':all_fields, 'data':data, 'pcmap':pcmap, 'failures':failures}, f)
