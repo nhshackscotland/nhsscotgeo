@@ -40,3 +40,8 @@ task :pry do
 end
 
 task :default => ['setup:fixed_phone_format', 'setup:service_location_indexes']
+
+desc "Clear existing database, ready for new import"
+task :destroy_everything do
+  Service.destroy_all
+end
