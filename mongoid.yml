@@ -13,4 +13,10 @@ development:
         - localhost:27017
 
 production:
-  uri: <%= ENV['MONGOLAB_URI'] %>
+  sessions:
+      default:
+        database: <%= ENV['MONGOLAB_DB_NAME'] %>
+        hosts:
+          - <%= ENV['MONGOLAB_DB_HOST'] %>
+        username: <%= ENV['MONGOLAB_DB_USERNAME'] %>
+        password: <%= ENV['MONGOLAB_DB_PASSWORD'] %>

@@ -2,6 +2,8 @@ require_relative 'env'
 require_relative 'models/service'
 require 'json'
 
+RADIUS_OF_EARTH_IN_MILES = 3959
+
 get "/services/search.json" do
   if params['ll'].nil?
     content_type :json
@@ -17,11 +19,27 @@ get "/services/search.json" do
     # we need to make sure we pass numbers into our query or Mongoid complains
     latlngs.map! { |l| l.to_f }
 
+    if params[:categories]
+      searched_services = Service.in(category: params[:categories].split(','))
+    else
+      searched_services = Service
+    end
+
     # and finally run our query
-    searched_services = Service.geo_near(latlngs).spherical.unique(true).max_distance(2)
+    searched_services = searched_services.
+      geo_near(latlngs).
+      spherical.
+      distance_multiplier(RADIUS_OF_EARTH_IN_MILES).
+      unique(true)
 
     searched_services.to_json
   end
+end
+
+get "/services/:id.json" do
+  content_type :json
+  # my kingdom for a 'blank' method!
+  Service.find(params[:id]).to_json unless params[:id] == nil
 end
 
 def hopefully_helpful_example
