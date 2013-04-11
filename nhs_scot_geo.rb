@@ -19,9 +19,8 @@ get "/services/search.json" do
     # we need to make sure we pass numbers into our query or Mongoid complains
     latlngs.map! { |l| l.to_f }
 
-
-    if params[:category]
-      searched_services = Service.where(category: params[:category])
+    if params[:categories]
+      searched_services = Service.in(category: params[:categories].split(','))
     else
       searched_services = Service
     end
@@ -29,10 +28,9 @@ get "/services/search.json" do
     # and finally run our query
     searched_services = searched_services.
       geo_near(latlngs).
-      spherical.unique(true).
-      distance_multiplier(RADIUS_OF_EARTH_IN_MILES)
-
-
+      spherical.
+      distance_multiplier(RADIUS_OF_EARTH_IN_MILES).
+      unique(true)
 
     searched_services.to_json
   end
@@ -42,7 +40,6 @@ get "/services/:id.json" do
   content_type :json
   # my kingdom for a 'blank' method!
   Service.find(params[:id]).to_json unless params[:id] == nil
-
 end
 
 def hopefully_helpful_example
@@ -52,4 +49,3 @@ def hopefully_helpful_example
     :example => "http://domain.org/services/search/ll=55,55"
   }.to_json
 end
-

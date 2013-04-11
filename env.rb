@@ -1,8 +1,6 @@
 require 'pry'
 require 'sinatra'
-
 require 'mongoid'
-
 
 if ENV['RACK_ENV'] == 'development'
 
